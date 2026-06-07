@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Guesser</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Share Tech Mono', monospace;
+    color: #e0e0ff;
+  }
+
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+  }
+  .star {
+    position: absolute; width: 2px; height: 2px; background: #fff;
+    border-radius: 50%; opacity: 0; animation: twinkle var(--d) var(--delay) infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; } 50% { opacity: var(--op); }
+  }
+
+  .window {
+    position: relative; z-index: 1;
+    background: #1a1a2e;
+    border: 1px solid #2a2a4a;
+    border-radius: 16px;
+    width: 460px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(91,79,207,0.15);
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+
+  .titlebar {
+    background: #13132b;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #2a2a4a;
+  }
+  .dots { display: flex; gap: 7px; }
+  .dot { width: 13px; height: 13px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+  .win-title { flex: 1; text-align: center; font-size: 12px; color: #555588; letter-spacing: 2px; }
+
+  .body { padding: 2rem 2rem 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+
+  .game-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px; font-weight: 700;
+    color: #c4b5fd;
+    letter-spacing: 4px;
+    text-align: center;
+  }
+  .game-sub { font-size: 12px; color: #555588; letter-spacing: 1px; text-align: center; margin-top: -0.5rem; }
+
+  .stats { display: flex; gap: 1rem; width: 100%; justify-content: center; }
+  .stat-box {
+    background: #13132b; border: 1px solid #2a2a4a; border-radius: 10px;
+    padding: 0.6rem 1.5rem; text-align: center; flex: 1;
+  }
+  .stat-label { font-size: 10px; color: #555588; letter-spacing: 2px; }
+  .stat-val { font-size: 22px; color: #a78bfa; font-family: 'Orbitron', sans-serif; }
+
+  .hint-box {
+    background: #13132b; border: 1px solid #2a2a4a; border-radius: 10px;
+    padding: 0.75rem 1.25rem; width: 100%; text-align: center;
+    font-size: 13px; letter-spacing: 1px;
+    transition: color 0.3s, border-color 0.3s;
+    min-height: 48px; display: flex; align-items: center; justify-content: center;
+  }
+
+  .input-row { display: flex; gap: 10px; width: 100%; }
+  .num-input {
+    flex: 1; background: #13132b; border: 1px solid #4f4f8f; border-radius: 10px;
+    color: #e0e0ff; font-size: 20px; font-family: 'Share Tech Mono', monospace;
+    padding: 0.6rem 1rem; text-align: center; outline: none;
+    transition: border-color 0.2s;
+  }
+  .num-input:focus { border-color: #a78bfa; }
+  .guess-btn {
+    background: #5b4fcf; border: none; border-radius: 10px;
+    color: #fff; font-size: 13px; font-family: 'Share Tech Mono', monospace;
+    padding: 0.6rem 1.4rem; cursor: pointer; letter-spacing: 2px;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .guess-btn:hover { background: #7c6de8; }
+  .guess-btn:active { transform: scale(0.97); }
+  .guess-btn:disabled { background: #333; color: #666; cursor: default; }
+
+  .progress-wrap { width: 100%; }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 10px; color: #555588; margin-bottom: 5px; letter-spacing: 1px; }
+  .progress-track { background: #13132b; border-radius: 4px; height: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; background: #5b4fcf; width: 0%; transition: width 0.4s ease, background 0.4s; }
+
+  .diff-row { display: flex; gap: 8px; }
+  .diff-btn {
+    background: transparent; border: 1px solid #2a2a4a; border-radius: 6px;
+    color: #555588; font-size: 11px; font-family: 'Share Tech Mono', monospace;
+    padding: 5px 14px; cursor: pointer; letter-spacing: 1px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .diff-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+  .diff-btn.active { border-color: #a78bfa; color: #a78bfa; }
+
+  .history { width: 100%; max-height: 90px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .history::-webkit-scrollbar { width: 4px; }
+  .history::-webkit-scrollbar-track { background: transparent; }
+  .history::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
+  .history-item { font-size: 11px; color: #555588; text-align: center; letter-spacing: 1px; }
+
+  .replay-btn {
+    background: #5b4fcf; border: none; border-radius: 10px;
+    color: #fff; font-size: 13px; font-family: 'Share Tech Mono', monospace;
+    padding: 0.7rem 2rem; cursor: pointer; letter-spacing: 2px; width: 100%;
+    transition: background 0.2s; display: none;
+  }
+  .replay-btn:hover { background: #7c6de8; }
+  .replay-btn.show { display: block; }
+
+  .shake { animation: shake 0.4s; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+  }
+  .pop { animation: pop 0.3s; }
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="dots">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+    </div>
+    <div class="win-title">NUMBER GUESSER</div>
+  </div>
+  <div class="body">
+    <div class="game-title">NUMBER GUESSER</div>
+    <div class="game-sub" id="sub-text">GUESS THE NUMBER BETWEEN 1 AND 100</div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">ATTEMPTS</div>
+        <div class="stat-val" id="attempts-val">0/10</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">BEST</div>
+        <div class="stat-val" id="best-val">---</div>
+      </div>
+    </div>
+
+    <div class="hint-box" id="hint" style="color:#7ee8a2; border-color:#2a4a3a;">
+      Type a number and press GUESS
+    </div>
+
+    <div class="input-row">
+      <input class="num-input" id="num-input" type="number" min="1" max="100" placeholder="?" />
+      <button class="guess-btn" id="guess-btn" onclick="makeGuess()">GUESS</button>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-labels"><span>ATTEMPTS USED</span><span id="prog-label">0 / 10</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="diff-row">
+      <button class="diff-btn active" onclick="setDiff(this,10,100)">EASY</button>
+      <button class="diff-btn" onclick="setDiff(this,7,500)">MEDIUM</button>
+      <button class="diff-btn" onclick="setDiff(this,5,1000)">HARD</button>
+    </div>
+
+    <div class="history" id="history"></div>
+
+    <button class="replay-btn" id="replay-btn" onclick="resetGame()">▶ PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+  // Stars
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*4}s;--op:${0.3+Math.random()*0.7}`;
+    starsEl.appendChild(s);
+  }
+
+  let answer, attempts, maxAttempts, maxRange, best = null, gameOver;
+
+  function init() {
+    maxAttempts = 10; maxRange = 100;
+    resetGame();
+  }
+
+  function resetGame() {
+    attempts = 0; gameOver = false;
+    answer = Math.floor(Math.random() * maxRange) + 1;
+    document.getElementById('num-input').value = '';
+    document.getElementById('num-input').disabled = false;
+    document.getElementById('guess-btn').disabled = false;
+    document.getElementById('replay-btn').classList.remove('show');
+    document.getElementById('history').innerHTML = '';
+    setHint('Type a number and press GUESS', '#7ee8a2', '#2a4a3a');
+    document.getElementById('sub-text').textContent = `GUESS THE NUMBER BETWEEN 1 AND ${maxRange}`;
+    updateStats();
+    document.getElementById('num-input').max = maxRange;
+  }
+
+  function setDiff(btn, att, range) {
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    maxAttempts = att; maxRange = range;
+    resetGame();
+  }
+
+  function setHint(msg, color, border) {
+    const h = document.getElementById('hint');
+    h.textContent = msg; h.style.color = color; h.style.borderColor = border;
+    h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop');
+  }
+
+  function updateStats() {
+    document.getElementById('attempts-val').textContent = `${attempts}/${maxAttempts}`;
+    document.getElementById('prog-label').textContent = `${attempts} / ${maxAttempts}`;
+    document.getElementById('progress-fill').style.width = `${(attempts/maxAttempts)*100}%`;
+    const pct = attempts / maxAttempts;
+    document.getElementById('progress-fill').style.background = pct < 0.5 ? '#5b4fcf' : pct < 0.8 ? '#f59e0b' : '#ef4444';
+    document.getElementById('best-val').textContent = best !== null ? best : '---';
+  }
+
+  function addHistory(guess, hint) {
+    const h = document.getElementById('history');
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.textContent = `[${attempts}] ${guess} → ${hint}`;
+    h.prepend(item);
+  }
+
+  function makeGuess() {
+    if (gameOver) return;
+    const input = document.getElementById('num-input');
+    const val = parseInt(input.value);
+    if (!val || val < 1 || val > maxRange) {
+      input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
+      return;
+    }
+    attempts++;
+    updateStats();
+    const diff = Math.abs(val - answer);
+
+    if (val === answer) {
+      setHint(`CORRECT! The answer was ${answer}!`, '#a78bfa', '#4a3a9a');
+      if (best === null || attempts < best) best = attempts;
+      gameOver = true;
+      endGame(true);
+      addHistory(val, 'CORRECT!');
+    } else if (attempts >= maxAttempts) {
+      setHint(`GAME OVER. Answer was ${answer}.`, '#ef4444', '#6a2a2a');
+      gameOver = true;
+      endGame(false);
+      addHistory(val, 'OUT OF TRIES');
+    } else {
+      let msg, color, border;
+      if (diff <= Math.ceil(maxRange * 0.05)) {
+        msg = val < answer ? 'BURNING HOT! Go higher!' : 'BURNING HOT! Go lower!';
+        color = '#f87171'; border = '#6a2a2a';
+      } else if (diff <= Math.ceil(maxRange * 0.15)) {
+        msg = val < answer ? 'Warm... try higher' : 'Warm... try lower';
+        color = '#fbbf24'; border = '#6a4a0a';
+      } else {
+        msg = val < answer ? 'Cold. Go much higher.' : 'Cold. Go much lower.';
+        color = '#7ee8a2'; border = '#2a4a3a';
+      }
+      setHint(msg, color, border);
+      addHistory(val, msg);
+    }
+    input.value = '';
+    input.focus();
+    updateStats();
+  }
+
+  function endGame(won) {
+    document.getElementById('num-input').disabled = true;
+    document.getElementById('guess-btn').disabled = true;
+    document.getElementById('replay-btn').classList.add('show');
+    updateStats();
+  }
+
+  document.getElementById('num-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') makeGuess();
+  });
+
+  init();
+</script>
+</body>
+</html>
