@@ -12,6 +12,9 @@ int main(){
     int answer = rand() % 100 + 1; // random number between 1-100
     int numberEntered;
 
+    for (int i = 0; i < 5; i++){
+        cout << "Attempt " << i + 1 << ": ";
+    }
     cout << "Type a number: ";
     cin >> numberEntered;
 
@@ -21,5 +24,8 @@ int main(){
         cout << "Incorrect! The answer was " << answer << endl;
     }
 
+
     return 0;
+    
+
 }
