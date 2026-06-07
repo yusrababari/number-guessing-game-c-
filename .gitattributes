@@ -1,2 +1,8 @@
-# gitattributes
-*.c++ linguist-detectable
+# .gitattributes
+
+# Make C++ detectable (ensure it's counted in language stats)
+*.cpp linguist-detectable=true
+*.h   linguist-detectable=true
+
+# Make HTML detectable too (in case it's being ignored)
+*.html linguist-detectable=true
