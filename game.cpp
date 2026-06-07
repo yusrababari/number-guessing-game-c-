@@ -24,7 +24,10 @@ int main(){
         cout << "Incorrect! The answer was " << answer << endl;
     }
 
-
+    char playAgain;
+cout << "Play again? (y/n): ";
+cin >> playAgain;
+if(playAgain == 'y') // restart game
     return 0;
     
 
