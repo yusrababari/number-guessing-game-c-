@@ -1,17 +1,25 @@
 //Number Guesser Game
 #include <iostream>
 #include <cstdlib>
+#include <ctime>
 
 using namespace std;
 
 int main(){
-    cout << "Number Guesser Game:" << end1;
-    int answer=rand()
+    srand(time(0)); // seed random number generator
+
+    cout << "Number Guesser Game:" << endl;
+    int answer = rand() % 100 + 1; // random number between 1-100
     int numberEntered;
-    cout << "Type a number:";
-    cin >> x;
-    if (x == answer){
-        cout << "You have guessed correctly!" << end1;
-    }   cout << "Incorrect:Try Again" << end1;
-    
+
+    cout << "Type a number: ";
+    cin >> numberEntered;
+
+    if (numberEntered == answer){
+        cout << "You have guessed correctly!" << endl;
+    } else {
+        cout << "Incorrect! The answer was " << answer << endl;
+    }
+
+    return 0;
 }
